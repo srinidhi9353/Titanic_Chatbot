@@ -151,29 +151,30 @@ with col4:
 
 st.markdown("---")
 
-# ---------------- LLM Setup ----------------
+# ---------------- OpenRouter LLM Setup ----------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
     st.error("Missing OpenRouter API Key. Please check your .env file.")
     st.stop()
 
+# Using ChatOpenAI as a compatible interface for OpenRouter
 llm = ChatOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
-    model="openai/gpt-4o-mini",
+    model="openai/gpt-4o-mini", # OpenRouter model slug
     temperature=0
 )
 
-# Enhanced Agent Brain
+# Enhanced Agent Intelligence
 prefix = """
 You are an expert data science assistant specializing in the Titanic dataset.
-Your goal is to provide accurate, concise, and professional answers to passenger-related queries.
+Your goal is to provide accurate, concise, and professional answers to passenger-related queries using the OpenRouter API.
 When answering:
 1. Provide a clear text summary of the findings.
-2. If the user asks for a chart, plot, or distribution, tell them what you found and then let the UI handle the visualization.
-3. Be robust to different question formats. If a query is ambiguous, explain your assumptions.
-4. Always refer to the data columns accurately (e.g., 'Survived', 'Pclass', 'Sex', 'Age', 'Fare', 'Embarked').
+2. If the user asks for a chart, plot, or distribution, explain the results in text and the UI will render the visual.
+3. Be robust to different question formats.
+4. Use the specific column names: 'Survived', 'Pclass', 'Sex', 'Age', 'Fare', 'Embarked'.
 """
 
 agent = create_pandas_dataframe_agent(

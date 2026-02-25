@@ -8,11 +8,10 @@ Traditional data analysis often requires writing complex SQL or Python code. Thi
 
 ## 🛠️ Tech Stack
 
-- **Streamlit**: For building a responsive and interactive user interface.
-- **LangChain**: To orchestrate the LLM and the Pandas DataFrame agent.
-- **OpenRouter (GPT-4o mini)**: As the reasoning engine for query interpretation and code generation.
-- **Pandas**: For robust data manipulation and analysis.
-- **Seaborn/Matplotlib**: For dynamic statistical visualizations.
+- **Streamlit**: For building the interactive data dashboard.
+- **LangChain**: For orchestrating the data agent and LLM logic.
+- **OpenRouter**: Leveraging the **GPT-4o mini** model for high-performance reasoning and data synthesis.
+- **Pandas/Seaborn**: For advanced data manipulation and statistical visualization.
 
 ## ✨ Key Features
 
