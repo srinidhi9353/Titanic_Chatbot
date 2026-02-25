@@ -4,4 +4,3 @@ __pycache__/
 *$py.class
 .streamlit/
 .ipynb_checkpoints/
-*.csv
