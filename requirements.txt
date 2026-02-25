@@ -1,0 +1,10 @@
+
+streamlit
+pandas
+seaborn
+matplotlib
+langchain
+langchain-openai
+langchain-experimental
+openai
+python-dotenv
