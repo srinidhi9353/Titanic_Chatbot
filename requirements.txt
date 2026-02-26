@@ -2,7 +2,6 @@ streamlit
 pandas
 seaborn
 matplotlib
-langchain
 langchain-openai
 openai
 python-dotenv
