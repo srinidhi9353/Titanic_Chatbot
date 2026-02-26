@@ -13,13 +13,13 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic Intel AI v5.0",
+    page_title="Titanic Intel AI v6.0",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ChatGPT-Style Professional UI with Logic Trace
+# ChatGPT-Style UI with Context Awareness
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
@@ -59,16 +59,17 @@ st.markdown("""
         padding: 1.5rem;
     }
 
-    /* Logic Trace Box */
-    .logic-trace {
-        padding: 10px 15px;
-        background: rgba(14, 165, 233, 0.1);
-        border-left: 3px solid var(--primary);
+    /* Logic/Memory Trace */
+    .memory-trace {
+        padding: 8px 12px;
+        background: rgba(37, 99, 235, 0.1);
+        border-right: 3px solid var(--secondary);
         border-radius: 4px;
         font-family: 'Fira Code', monospace;
-        font-size: 0.8rem;
-        color: #94a3b8;
+        font-size: 0.75rem;
+        color: #60a5fa;
         margin-bottom: 10px;
+        text-align: right;
     }
 
     /* Loading Animation */
@@ -94,7 +95,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ---------------- Data Core ----------------
+# ---------------- Initialization ----------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "last_plan" not in st.session_state:
+    st.session_state.last_plan = None
+
+# Load Data
 @st.cache_data
 def load_data():
     return pd.read_csv("titanic.csv")
@@ -104,39 +111,38 @@ df = load_data()
 # ---------------- Sidebar ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("🧊 Master AI Control")
-    st.info("**v5.0 Semantic Engine** active. Logic-first execution with dynamic formula derivation.")
+    st.title("🧠 Context Hub")
+    st.info("**v6.0 Memory Layer** enabled. Conversational history and pronoun resolution are now active.")
     
+    if st.button("🧹 Clear Conversation", use_container_width=True):
+        st.session_state.messages = []
+        st.session_state.last_plan = None
+        st.rerun()
+
     st.divider()
-    st.subheader("💡 Expert Prompts")
-    prompts = [
-        "Percentage of passengers of age below 30",
-        "Ratio of male and female passengers",
-        "Survival rate of females in 1st class vs 3rd class",
-        "Average fare compared by embarkation port Chart",
-        "Age distribution of survivors"
-    ]
-    for p in prompts:
-        if st.button(p, use_container_width=True):
-            st.session_state.active_prompt = p
+    st.subheader("💡 Analysis Flow")
+    st.markdown("""
+    1. **Turn 1**: "Who is the first passenger?"
+    2. **Turn 2**: "How old were **they**?"
+    3. **Turn 3**: "What was **their** fare?"
+    """)
+    st.divider()
+    if st.checkbox("🔍 Dataset Lab"):
+        st.dataframe(df.head(10))
 
-    if st.checkbox("🔍 Dataset Schema"):
-        st.write(df.dtypes)
-        st.dataframe(df.head(5))
-
-# ---------------- Dashboard Layer ----------------
-st.title("🚢 Titanic Semantic AI v5.0")
+# ---------------- Header ----------------
+st.title("🚢 Titanic Contextual AI v6.0")
 st.markdown("---")
 
 m1, m2, m3, m4 = st.columns(4)
-with m1: st.metric("Sample Size", len(df))
+with m1: st.metric("Historical Size", len(df))
 with m2: st.metric("Survivors", df['Survived'].sum())
-with m3: st.metric("Accuracy", "100%")
-with m4: st.metric("Engine", "Dynamic v5")
+with m3: st.metric("Memory Slots", "Active")
+with m4: st.metric("Reasoning", "v6-Turbo")
 
 st.markdown("---")
 
-# ---------------- Engine Intelligence ----------------
+# ---------------- Intelligence Engine ----------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
@@ -150,34 +156,36 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-def build_semantic_plan(query, df):
-    """LLM derives the mathematical logic and filters."""
-    columns = df.columns.tolist()
+def build_contextual_plan(query, history, last_plan):
+    """LLM derives logic considering previous context and history."""
+    
+    # Format history for LLM
+    history_str = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
     
     system_prompt = f"""
-    You are a expert Data Scientist. Translate Titanic queries into a JSON logic plan.
-    Columns: {columns}
+    You are an expert Titanic Data Scientist with conversational memory.
+    Columns: {df.columns.tolist()}
     
-    Semantic Mapping:
-    - 'child/kids' -> (Age < 16)
-    - 'class' -> (Pclass == 1, 2, or 3)
-    - 'survived' -> (Survived == 1)
+    Current History:
+    {history_str}
     
-    Operation Units:
-    - 'percentage': (Subset Count / Denominator Count) * 100
-    - 'ratio': (Count A / Count B)
-    - 'mean': average of target column
-    - 'distribution': Visual histogram
+    Last Logic Plan Used:
+    {json.dumps(last_plan) if last_plan else "None"}
+    
+    Rules:
+    - If user uses pronouns ('they', 'their', 'that group', 'those passengers'), refer to the `Last Logic Plan Used`.
+    - Detect 'percentage', 'ratio', 'mean', 'count', 'first_record' as operations.
+    - If user asks a new question, ignore old filters unless specified.
     
     Output JSON ONLY:
     {{
-        "op": "percentage" | "ratio" | "mean" | "count" | "visual",
+        "op": "percentage" | "ratio" | "mean" | "count" | "first_record" | "visual",
         "target": "col_name" | null,
         "filters": [
             {{"col": "Name", "val": value, "comp": "==" | "<" | ">"}}
         ],
-        "ratio_split": {{"a": [filters], "b": [filters]}} | null,
-        "trace": "Formula being used"
+        "use_previous_context": true | false,
+        "trace": "Reasoning for context resolution"
     }}
     """
     try:
@@ -189,97 +197,96 @@ def build_semantic_plan(query, df):
     except:
         return None
 
-def execute_semantic_plan(plan, df):
-    """Zero-NaN logic-first execution."""
-    if not plan: return "I'm sorry, I couldn't derive the logic for that query.", None
+def execute_plan(plan, df, last_plan):
+    """Execute plan with context merging."""
+    if not plan: return "I couldn't resolve the context of your question.", None
     
     try:
-        op = plan.get("op")
-        trace = plan.get("trace", "Computing...")
+        active_filters = plan.get("filters", [])
         
-        def apply_filters(data, filters):
-            for f in filters:
-                col, val, comp = f["col"], f["val"], f["comp"]
-                if comp == "==": data = data[data[col] == val]
-                elif comp == "<": data = data[data[col] < val]
-                elif comp == ">": data = data[data[col] > val]
-            return data
+        # Merge context if requested
+        if plan.get("use_previous_context") and last_plan:
+            active_filters = last_plan.get("filters", []) + active_filters
+        
+        # Apply Logic
+        working_data = df.copy()
+        for f in active_filters:
+            col, val, comp = f["col"], f["val"], f["comp"]
+            if comp == "==": working_data = working_data[working_data[col] == val]
+            elif comp == "<": working_data = working_data[working_data[col] < val]
+            elif comp == ">": working_data = working_data[working_data[col] > val]
 
+        if working_data.empty:
+            return "Based on that context, no matching records were found.", None
+
+        op = plan.get("op")
+        target = plan.get("target")
+        trace = plan.get("trace", "")
+        
         answer = ""
         fig = None
 
-        if op == "percentage":
-            numerator_df = apply_filters(df.copy(), plan.get("filters", []))
-            # If query mentions a subgroup (e.g. % of women), denominator should be that subgroup.
-            # But usually it's % of total unless specified. LLM generally defaults correctly.
-            val = (len(numerator_df) / len(df)) * 100
-            answer = f"{trace}\n\nResult: **{val:.2f}%**"
-
-        elif op == "ratio":
-            split = plan.get("ratio_split")
-            count_a = len(apply_filters(df.copy(), split["a"]))
-            count_b = len(apply_filters(df.copy(), split["b"]))
-            val = count_a / count_b if count_b != 0 else 0
-            answer = f"**{trace}**\n\nResult: **{val:.2f} : 1**\n(A: {count_a}, B: {count_b})"
-
+        if op == "first_record":
+            rec = working_data.iloc[0]
+            answer = f"**First Passenger in Context:**\n- **Name:** {rec.get('Name', 'Unknown')}\n- **Age:** {rec.get('Age', 'N/A')}\n- **Fare:** ${rec.get('Fare', 0):.2f}\n- **Class:** {rec.get('Pclass')}"
+        
+        elif op == "percentage":
+            val = (len(working_data) / len(df)) * 100
+            answer = f"This group represents **{val:.2f}%** of all passengers."
+            
         elif op == "mean":
-            subset = apply_filters(df.copy(), plan.get("filters", []))
-            target = plan.get("target")
-            val = subset[target].mean()
+            val = working_data[target].mean()
             if target == "Survived":
-                answer = f"**{trace}**\n\nSurvival Rate: **{val*100:.2f}%**"
+                answer = f"The survival rate for this group is **{val*100:.2f}%**."
             else:
-                answer = f"**{trace}**\n\nAverage {target}: **{val:.2f}**"
+                answer = f"The average {target} is **{val:.2f}**."
 
         elif op == "count":
-            subset = apply_filters(df.copy(), plan.get("filters", []))
-            answer = f"**Found {len(subset)} passengers** matching the criteria."
+            answer = f"Found **{len(working_data)}** passengers in this context."
 
         elif op == "visual":
-            subset = apply_filters(df.copy(), plan.get("filters", []))
-            target = plan.get("target")
             fig, ax = plt.subplots(figsize=(10, 4))
             plt.style.use('dark_background')
-            sns.histplot(data=subset, x=target, kde=True, color='#38bdf8', ax=ax)
+            sns.histplot(data=working_data, x=target, kde=True, color='#38bdf8', ax=ax)
             ax.set_facecolor('none')
             fig.patch.set_facecolor('none')
-            answer = f"**Trace:** {trace}"
+            answer = f"Visualizing {target} distribution for current context."
+
+        # Save context
+        plan["filters"] = active_filters # Save the merged filters for next turn
+        st.session_state.last_plan = plan
 
         return answer, fig
     except Exception as e:
-        return f"Logic Error: {e}", None
+        return f"Operational Failure: {e}", None
 
-# ---------------- Chat Shell ----------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
+# ---------------- Chat Workflow ----------------
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
         if "fig" in m and m["fig"]: st.pyplot(m["fig"])
 
-prompt = st.chat_input("Ask a semantic query...")
-if "active_prompt" in st.session_state:
-    prompt = st.session_state.active_prompt
-    del st.session_state.active_prompt
-
-if prompt:
+if prompt := st.chat_input("Continue our conversation about Titanic..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        place = st.empty()
-        place.markdown("""
+        loading = st.empty()
+        loading.markdown("""
             <div class="spike-container">
                 <div class="spike"></div><div class="spike"></div><div class="spike"></div>
-                <span style="font-size: 0.8rem; color: #94a3b8; font-family: 'Fira Code';">SEMANTIC_DERIVATION_ACTIVE</span>
+                <span style="font-size: 0.8rem; color: #94a3b8; font-family: 'Fira Code';">RESOLVING_CONTEXT_MEMORY...</span>
             </div>
         """, unsafe_allow_html=True)
         
-        plan = build_semantic_plan(prompt, df)
-        res, fig = execute_semantic_plan(plan, df)
+        plan = build_contextual_plan(prompt, st.session_state.messages[:-1], st.session_state.last_plan)
         
-        place.empty()
+        if plan and plan.get("use_previous_context"):
+            st.markdown(f'<div class="memory-trace">🧠 Context: {plan.get("trace")}</div>', unsafe_allow_html=True)
+        
+        res, fig = execute_plan(plan, df, st.session_state.last_plan)
+        loading.empty()
+        
         st.markdown(res)
         if fig: st.pyplot(fig)
         st.session_state.messages.append({"role": "assistant", "content": res, "fig": fig})
