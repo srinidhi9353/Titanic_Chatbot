@@ -13,146 +13,152 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic Intelligence",
+    page_title="Titanic AI Intelligence",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for a premium "State of the Art" look
+# Premium ChatGPT-style UI with Glassmorphism
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
     
+    :root {
+        --primary: #38bdf8;
+        --secondary: #2563eb;
+        --bg-dark: #0f172a;
+        --card-bg: rgba(255, 255, 255, 0.04);
+        --border: rgba(255, 255, 255, 0.1);
+    }
+
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
+        color: #e2e8f0;
     }
 
-    .main {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #f8fafc;
+    .stApp {
+        background: radial-gradient(circle at top right, #1e293b, #0f172a);
     }
 
-    /* Glassmorphism containers */
+    /* Glassmorphism Containers */
     div[data-testid="stMetricValue"] {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        padding: 15px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        transition: transform 0.3s ease;
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px !important;
+        border: 1px solid var(--border);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     div[data-testid="stMetricValue"]:hover {
-        transform: translateY(-5px);
-        border-color: #38bdf8;
+        transform: translateY(-8px) scale(1.02);
+        border-color: var(--primary);
+        box-shadow: 0 12px 40px 0 rgba(14, 165, 233, 0.2);
     }
 
-    .stButton>button {
-        background: linear-gradient(90deg, #0ea5e9 0%, #2563eb 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        padding: 0.5rem 2rem;
-        transition: all 0.3s ease;
-    }
-
-    .stButton>button:hover {
-        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
-        transform: scale(1.02);
-    }
-
-    /* Chat bubble styling */
+    /* Chat Styling */
     [data-testid="stChatMessage"] {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 15px;
-        margin-bottom: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: var(--card-bg);
+        border-radius: 20px;
+        margin-bottom: 20px;
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+        animation: slideIn 0.5s ease-out;
     }
 
-    /* Spikes Loading Animation */
-    .spikes-container {
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* Spikes Animation */
+    .loading-box {
         display: flex;
         align-items: center;
-        gap: 5px;
-        height: 30px;
-        padding: 10px;
+        gap: 6px;
+        padding: 15px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        width: fit-content;
     }
     .spike {
-        width: 4px;
-        height: 10px;
-        background: #38bdf8;
+        width: 3px;
+        height: 12px;
+        background: var(--primary);
         border-radius: 2px;
-        animation: spike-pulse 1s infinite ease-in-out;
+        animation: pulse 1s infinite ease-in-out;
     }
-    .spike:nth-child(2) { animation-delay: 0.1s; }
-    .spike:nth-child(3) { animation-delay: 0.2s; }
-    .spike:nth-child(4) { animation-delay: 0.3s; }
-    .spike:nth-child(5) { animation-delay: 0.4s; }
+    .spike:nth-child(2) { animation-delay: 0.15s; }
+    .spike:nth-child(3) { animation-delay: 0.3s; }
+    .spike:nth-child(4) { animation-delay: 0.45s; }
+    .spike:nth-child(5) { animation-delay: 0.6s; }
 
-    @keyframes spike-pulse {
-        0%, 100% { height: 10px; opacity: 0.5; }
-        50% { height: 25px; opacity: 1; }
+    @keyframes pulse {
+        0%, 100% { height: 12px; opacity: 0.4; transform: scaleY(1); }
+        50% { height: 28px; opacity: 1; transform: scaleY(1.2); }
     }
     </style>
     """, unsafe_allow_html=True)
 
-# ---------------- Sidebar ----------------
+# ---------------- Sidebar Dashboard ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("Project Details")
+    st.title("🗂️ Dataset Intel")
+    
     st.info("""
-    **Titanic Intelligence** is an advanced data exploration tool. 
-    It uses a Hybrid Analysis Engine to interact with the Titanic dataset in real-time.
+    **Hybrid AI Engine** v2.0
+    Combining LLM reasoning with high-performance Pandas execution.
     """)
+    
     st.divider()
-    st.markdown("### Example Queries")
-    st.markdown("""
-    - "What percentage of passengers were male?"
-    - "Show me a histogram of passenger ages"
-    - "What was the average ticket fare?"
-    - "How many passengers embarked from each port?"
-    - "Survival rate of women in 1st class"
-    """)
-    st.divider()
-    st.markdown("### Dataset Overview")
-    st.write("The dataset contains information about 891 passengers, including survival status, age, gender, and ticket class.")
-    if st.checkbox("Show Raw Data"):
-        st.dataframe(pd.read_csv("titanic.csv").head(10))
+    st.subheader("💡 Expert Prompts")
+    prompts = [
+        "Survival rate of 1st class vs 3rd class",
+        "Age distribution of survivors",
+        "Fare vs Age correlation",
+        "Port embarkation count by gender",
+        "Percentage of children who survived"
+    ]
+    for p in prompts:
+        if st.button(p, use_container_width=True):
+            st.session_state.pushed_prompt = p
 
-# ---------------- Load Dataset ----------------
+    st.divider()
+    if st.checkbox("🔍 View Raw Matrix"):
+        st.dataframe(pd.read_csv("titanic.csv").head(15), height=300)
+
+# ---------------- Data Core ----------------
 @st.cache_data
 def load_data():
-    data = pd.read_csv("titanic.csv")
-    return data
+    return pd.read_csv("titanic.csv")
 
 df = load_data()
 
-# ---------------- Header & KPIs ----------------
-st.title("🚢 Titanic Intelligence Dashboard")
+# ---------------- Main Metrics ----------------
+st.title("🚢 Titanic Hybrid AI Assistant")
 st.markdown("---")
 
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    st.metric("Total Passengers", len(df))
-with col2:
-    survival_rate = f"{(df['Survived'].mean() * 100):.1f}%"
-    st.metric("Survival Rate", survival_rate)
-with col3:
-    avg_age = f"{df['Age'].mean():.1f}"
-    st.metric("Avg. Passenger Age", avg_age)
-with col4:
-    avg_fare = f"${df['Fare'].mean():.2f}"
-    st.metric("Avg. Fare Paid", avg_fare)
+m1, m2, m3, m4 = st.columns(4)
+with m1: st.metric("Total Passengers", len(df))
+with m2: st.metric("Survival Rate", f"{(df['Survived'].mean()*100):.1f}%")
+with m3: st.metric("Median Age", f"{df['Age'].median():.0f}")
+with m4: st.metric("Avg. Fare", f"${df['Fare'].mean():.2f}")
 
 st.markdown("---")
 
-# ---------------- OpenRouter LLM Setup ----------------
+# ---------------- Hybrid Intelligence ----------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
-    st.error("Missing OpenRouter API Key. Please check your .env file.")
+    st.error("Missing OpenRouter API Key. Check `.env`.")
     st.stop()
 
 llm = ChatOpenAI(
@@ -162,140 +168,122 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-# ---------------- Hybrid Analysis Engine ----------------
-
-def get_intent(query):
-    """Uses LLM to parse user intent into a structured plan."""
+def build_analysis_plan(query):
+    """LLM parses query into a structured computational plan."""
     system_prompt = """
-    You are a data analyst. Parse the user's Titanic dataset query into a JSON object.
-    Columns: Survived (0 or 1), Pclass (1, 2, 3), Sex (male, female), Age, SibSp, Parch, Fare, Embarked (C, Q, S).
-    Return JSON format: {"intent": "stat" | "visual" | "list", "column": "col_name", "operation": "mean" | "count" | "percentage" | "distribution", "filters": {"col": "val"}}
-    Examples: 
-    - "male percentage" -> {"intent": "stat", "column": "Sex", "operation": "percentage", "filters": {"Sex": "male"}}
-    - "age distribution" -> {"intent": "visual", "column": "Age", "operation": "distribution", "filters": {}}
-    - "survival rate of women in class 1" -> {"intent": "stat", "column": "Survived", "operation": "mean", "filters": {"Sex": "female", "Pclass": 1}}
-    ONLY RETURN JSON.
+    Parse Titanic dataset queries into JSON.
+    Columns: Survived (0,1), Pclass (1,2,3), Sex (male,female), Age, Fare, Embarked (C,Q,S).
+    Output JSON: {
+        "intent": "stat" | "visual",
+        "column": "col_name",
+        "operation": "mean" | "count" | "correlation" | "distribution",
+        "filters": {"col": "val", "col_ops": ">" | "<" | "=="},
+        "compare": "col_name" | null
+    }
+    Example: "Women in class 1 survival rate" -> {"intent": "stat", "column": "Survived", "operation": "mean", "filters": {"Sex": "female", "Pclass": 1}}
+    ONLY JSON.
     """
     try:
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": query}
-        ]
-        response = llm.invoke(messages)
-        # Extract JSON if LLM wraps it in triple backticks
-        content = response.content
-        if "```json" in content:
-            match = re.search(r'```json\n(.*?)\n```', content, re.DOTALL)
-            if match:
-                content = match.group(1)
-        return json.loads(content.strip())
-    except Exception as e:
+        messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": query}]
+        res = llm.invoke(messages).content
+        if "```json" in res:
+            res = re.search(r'```json\n(.*?)\n```', res, re.DOTALL).group(1)
+        return json.loads(res.strip())
+    except:
         return None
 
-def execute_analysis(plan, df):
-    """Executes the analysis plan and returns (answer, fig)."""
-    if not plan:
-        return "I'm sorry, I couldn't parse that query. Could you try rephrasing?", None
-
+def execute_plan(plan, df):
+    """Pandas executes the computational plan."""
+    if not plan: return "I couldn't decode that query. Try something specific like 'Survival rate of men over 30'.", None
+    
     try:
-        filtered_df = df.copy()
-        for col, val in plan.get("filters", {}).items():
-            if col in filtered_df.columns:
-                filtered_df = filtered_df[filtered_df[col] == val]
+        data = df.copy()
+        filters = plan.get("filters", {})
+        for col, val in filters.items():
+            if col in data.columns:
+                if isinstance(val, (int, float)):
+                    data = data[data[col] == val]
+                else:
+                    data = data[data[col] == val]
 
         intent = plan.get("intent")
         col = plan.get("column")
         op = plan.get("operation")
+        compare = plan.get("compare")
 
         answer = ""
         fig = None
 
         if intent == "stat":
-            if op == "percentage":
-                val = (len(filtered_df) / len(df)) * 100
-                answer = f"The percentage of passengers matching those criteria is {val:.2f}%."
-            elif op == "mean":
-                val = filtered_df[col].mean()
-                if col == "Survived":
-                    answer = f"The survival rate for this group was {val*100:.2f}%."
-                else:
-                    answer = f"The average {col} is {val:.2f}."
+            if op == "mean":
+                val = data[col].mean()
+                label = "Survival Rate" if col == "Survived" else f"Average {col}"
+                answer = f"The **{label}** for this group is **{val*100 if col=='Survived' else val:.2f}{'%' if col=='Survived' else ''}**."
             elif op == "count":
-                val = len(filtered_df)
-                answer = f"There were {val} passengers matching your query."
+                answer = f"Found **{len(data)}** passengers matching your criteria."
 
         elif intent == "visual":
-            if op == "distribution" or "histogram" in str(plan):
-                fig, ax = plt.subplots(figsize=(10, 5))
-                sns.histplot(data=filtered_df, x=col, kde=True, ax=ax, palette="mako")
-                ax.set_title(f"Distribution of {col}")
-                answer = f"Here is the distribution chart for {col}."
-            elif op == "count":
-                fig, ax = plt.subplots(figsize=(10, 5))
-                sns.countplot(data=filtered_df, x=col, ax=ax, palette="viridis")
-                ax.set_title(f"Count of {col}")
-                answer = f"Here is the frequency chart for {col}."
+            fig, ax = plt.subplots(figsize=(10, 5))
+            plt.style.use('dark_background')
+            if op == "distribution":
+                sns.histplot(data=data, x=col, kde=True, ax=ax, color='#38bdf8', palette="mako")
+                answer = f"Showing the distribution of **{col}**."
+            elif op == "count" or compare:
+                sns.countplot(data=data, x=col, hue=compare, ax=ax, palette="viridis")
+                answer = f"Frequency analysis of **{col}**{' compared by ' + compare if compare else ''}."
+            
+            ax.set_facecolor('none')
+            fig.patch.set_facecolor('none')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
 
-        if not answer:
-            answer = "I found the data, but I'm not sure how to summarize it. Try asking for a 'percentage', 'average', or 'chart'."
-        
-        return answer, fig
-
+        return answer if answer else "Analysis complete, but no specific insight found.", fig
     except Exception as e:
-        return f"Error executing analysis: {e}", None
+        return f"Computation Error: {e}", None
 
-# ---------------- Chat Interface ----------------
+# ---------------- Chat System ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-        if "fig" in message and message["fig"] is not None:
-            st.pyplot(message["fig"])
+# Display History
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+        if "fig" in msg and msg["fig"]:
+            st.pyplot(msg["fig"])
 
-# User Input
-if prompt := st.chat_input("Ask a question about the Titanic passengers..."):
+# Handling Prompt Injection from Sidebar/Input
+prompt = st.chat_input("Message Titanic AI...")
+if "pushed_prompt" in st.session_state:
+    prompt = st.session_state.pushed_prompt
+    del st.session_state.pushed_prompt
+
+if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        loading_placeholder = st.empty()
-        loading_placeholder.markdown("""
-            <div class="spikes-container">
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <span style="margin-left: 10px; font-size: 0.9rem; color: #94a3b8;">Routing intelligence...</span>
+        status = st.empty()
+        status.markdown("""
+            <div class="loading-box">
+                <div class="spike"></div><div class="spike"></div><div class="spike"></div>
+                <div class="spike"></div><div class="spike"></div>
+                <span style="font-size: 0.9rem; color: #94a3b8; font-family: 'Fira Code';">AI.THINKING()</span>
             </div>
         """, unsafe_allow_html=True)
         
-        # 1. Get Intent
-        plan = get_intent(prompt)
-        loading_placeholder.markdown("""
-            <div class="spikes-container">
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <div class="spike"></div>
-                <span style="margin-left: 10px; font-size: 0.9rem; color: #94a3b8;">Processing data...</span>
+        plan = build_analysis_plan(prompt)
+        status.markdown("""
+            <div class="loading-box">
+                <div class="spike"></div><div class="spike"></div><div class="spike"></div>
+                <div class="spike"></div><div class="spike"></div>
+                <span style="font-size: 0.9rem; color: #94a3b8; font-family: 'Fira Code';">PANDAS.EXECUTE()</span>
             </div>
         """, unsafe_allow_html=True)
         
-        # 2. Execute
-        answer, fig = execute_analysis(plan, df)
+        res, fig = execute_plan(plan, df)
+        status.empty()
         
-        loading_placeholder.empty()
-        st.markdown(answer)
-        if fig:
-            st.pyplot(fig)
-        
-        # Save to history
-        new_msg = {"role": "assistant", "content": answer}
-        if fig: new_msg["fig"] = fig
-        st.session_state.messages.append(new_msg)
+        st.markdown(res)
+        if fig: st.pyplot(fig)
+        st.session_state.messages.append({"role": "assistant", "content": res, "fig": fig})
