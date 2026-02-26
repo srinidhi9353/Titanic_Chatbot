@@ -13,13 +13,13 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic AI Intelligence",
+    page_title="Titanic Intelligence AI",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Premium ChatGPT-style UI with Glassmorphism
+# Premium ChatGPT-style UI
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
@@ -41,21 +41,13 @@ st.markdown("""
         background: radial-gradient(circle at top right, #1e293b, #0f172a);
     }
 
-    /* Glassmorphism Containers */
+    /* Glassmorphism Metrics */
     div[data-testid="stMetricValue"] {
         background: var(--card-bg);
         border-radius: 16px;
         padding: 20px !important;
         border: 1px solid var(--border);
         backdrop-filter: blur(12px);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    div[data-testid="stMetricValue"]:hover {
-        transform: translateY(-8px) scale(1.02);
-        border-color: var(--primary);
-        box-shadow: 0 12px 40px 0 rgba(14, 165, 233, 0.2);
     }
 
     /* Chat Styling */
@@ -65,21 +57,9 @@ st.markdown("""
         margin-bottom: 20px;
         border: 1px solid var(--border);
         padding: 1.5rem;
-        animation: slideIn 0.5s ease-out;
     }
 
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-    /* Spikes Animation */
+    /* AI Thinking Spikes */
     .loading-box {
         display: flex;
         align-items: center;
@@ -96,69 +76,66 @@ st.markdown("""
         border-radius: 2px;
         animation: pulse 1s infinite ease-in-out;
     }
-    .spike:nth-child(2) { animation-delay: 0.15s; }
-    .spike:nth-child(3) { animation-delay: 0.3s; }
-    .spike:nth-child(4) { animation-delay: 0.45s; }
-    .spike:nth-child(5) { animation-delay: 0.6s; }
+    .spike:nth-child(2) { animation-delay: 0.1s; }
+    .spike:nth-child(3) { animation-delay: 0.2s; }
+    .spike:nth-child(4) { animation-delay: 0.3s; }
+    .spike:nth-child(5) { animation-delay: 0.4s; }
 
     @keyframes pulse {
-        0%, 100% { height: 12px; opacity: 0.4; transform: scaleY(1); }
-        50% { height: 28px; opacity: 1; transform: scaleY(1.2); }
+        0%, 100% { height: 12px; opacity: 0.4; }
+        50% { height: 28px; opacity: 1; }
     }
     </style>
     """, unsafe_allow_html=True)
 
+# ---------------- Data Core ----------------
+@st.cache_data
+def load_data():
+    # Use seaborn dataset for variety, but ensure it matches your requirements
+    return sns.load_dataset("titanic")
+
+df = load_data()
+
 # ---------------- Sidebar Dashboard ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("🗂️ Dataset Intel")
+    st.title("🗂️ Intelligence Hub")
     
-    st.info("""
-    **Hybrid AI Engine** v2.0
-    Combining LLM reasoning with high-performance Pandas execution.
-    """)
+    st.info("**v3.0 Auto-Detect Engine** active. Now with schema awareness and robust error handling.")
     
     st.divider()
     st.subheader("💡 Expert Prompts")
     prompts = [
+        "Percentage of children who survived",
         "Survival rate of 1st class vs 3rd class",
-        "Age distribution of survivors",
-        "Fare vs Age correlation",
-        "Port embarkation count by gender",
-        "Percentage of children who survived"
+        "Average fare paid by survivors vs non-survivors",
+        "Embarkation count by gender chart",
+        "Age distribution of passengers"
     ]
     for p in prompts:
         if st.button(p, use_container_width=True):
-            st.session_state.pushed_prompt = p
+            st.session_state.active_prompt = p
 
-    st.divider()
-    if st.checkbox("🔍 View Raw Matrix"):
-        st.dataframe(pd.read_csv("titanic.csv").head(15), height=300)
+    if st.checkbox("🔍 Inspect Data Matrix"):
+        st.dataframe(df.head(10), height=300)
 
-# ---------------- Data Core ----------------
-@st.cache_data
-def load_data():
-    return pd.read_csv("titanic.csv")
-
-df = load_data()
-
-# ---------------- Main Metrics ----------------
-st.title("🚢 Titanic Hybrid AI Assistant")
+# ---------------- Header Metrics ----------------
+st.title("🚢 Titanic AI Intelligence v3.0")
 st.markdown("---")
 
 m1, m2, m3, m4 = st.columns(4)
-with m1: st.metric("Total Passengers", len(df))
-with m2: st.metric("Survival Rate", f"{(df['Survived'].mean()*100):.1f}%")
-with m3: st.metric("Median Age", f"{df['Age'].median():.0f}")
-with m4: st.metric("Avg. Fare", f"${df['Fare'].mean():.2f}")
+with m1: st.metric("Survivors", df['survived'].sum())
+with m2: st.metric("Overall Survival", f"{(df['survived'].mean()*100):.1f}%")
+with m3: st.metric("Median Age", f"{df['age'].median():.0f}")
+with m4: st.metric("Max Fare", f"${df['fare'].max():.2f}")
 
 st.markdown("---")
 
-# ---------------- Hybrid Intelligence ----------------
+# ---------------- Intelligence Engine ----------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
-    st.error("Missing OpenRouter API Key. Check `.env`.")
+    st.error("Missing OpenRouter API Key.")
     st.stop()
 
 llm = ChatOpenAI(
@@ -168,20 +145,35 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-def build_analysis_plan(query):
-    """LLM parses query into a structured computational plan."""
-    system_prompt = """
-    Parse Titanic dataset queries into JSON.
-    Columns: Survived (0,1), Pclass (1,2,3), Sex (male,female), Age, Fare, Embarked (C,Q,S).
-    Output JSON: {
+def build_computational_plan(query, df):
+    """LLM uses schema awareness to build a precise plan."""
+    schema_info = df.dtypes.to_string()
+    sample_data = df.head(3).to_string()
+    
+    system_prompt = f"""
+    You are a data engineer for the Titanic dataset.
+    Columns: {df.columns.tolist()}
+    Dtypes: {schema_info}
+    Sample: {sample_data}
+
+    Rules:
+    - If user asks for "children", filter by 'age' < 18 or 'who' == 'child'.
+    - If user asks for "percentage", calculate (subset_count / total_count) * 100.
+    - If user asks for "survival rate", it's the mean of 'survived'.
+    - If querying 'class', values are 'First', 'Second', 'Third' (NOT 1, 2, 3).
+
+    Output JSON ONLY:
+    {{
         "intent": "stat" | "visual",
-        "column": "col_name",
-        "operation": "mean" | "count" | "correlation" | "distribution",
-        "filters": {"col": "val", "col_ops": ">" | "<" | "=="},
-        "compare": "col_name" | null
-    }
-    Example: "Women in class 1 survival rate" -> {"intent": "stat", "column": "Survived", "operation": "mean", "filters": {"Sex": "female", "Pclass": 1}}
-    ONLY JSON.
+        "target_col": "col_name",
+        "operation": "mean" | "count" | "percentage" | "sum",
+        "filters": [
+            {{"col": "name", "op": "==", "val": "value"}},
+            {{"col": "age", "op": "<", "val": 18}}
+        ],
+        "groupby": "col_name" | null,
+        "explanation": "Brief reasoning"
+    }}
     """
     try:
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": query}]
@@ -192,98 +184,102 @@ def build_analysis_plan(query):
     except:
         return None
 
-def execute_plan(plan, df):
-    """Pandas executes the computational plan."""
-    if not plan: return "I couldn't decode that query. Try something specific like 'Survival rate of men over 30'.", None
+def execute_computational_plan(plan, df):
+    """Executes the plan with robust error handling."""
+    if not plan: return "I'm sorry, I couldn't interpret that query. Could you try rephrasing?", None
     
     try:
         data = df.copy()
-        filters = plan.get("filters", {})
-        for col, val in filters.items():
-            if col in data.columns:
-                if isinstance(val, (int, float)):
-                    data = data[data[col] == val]
-                else:
-                    data = data[data[col] == val]
+        filters = plan.get("filters", [])
+        
+        # Apply filters
+        for f in filters:
+            col, op, val = f["col"], f["op"], f["val"]
+            if op == "==": data = data[data[col] == val]
+            elif op == "<": data = data[data[col] < val]
+            elif op == ">": data = data[data[col] > val]
+
+        if data.empty:
+            return "Based on the criteria, no matching passengers were found.", None
 
         intent = plan.get("intent")
-        col = plan.get("column")
+        target = plan.get("target_col")
         op = plan.get("operation")
-        compare = plan.get("compare")
-
+        groupby = plan.get("groupby")
+        
         answer = ""
         fig = None
 
         if intent == "stat":
-            if op == "mean":
-                val = data[col].mean()
-                label = "Survival Rate" if col == "Survived" else f"Average {col}"
-                answer = f"The **{label}** for this group is **{val*100 if col=='Survived' else val:.2f}{'%' if col=='Survived' else ''}**."
+            if op == "percentage":
+                val = (len(data) / len(df)) * 100
+                answer = f"The percentage of passengers matching your query is **{val:.2f}%**."
+            elif op == "mean":
+                val = data[target].mean()
+                if target == "survived":
+                    answer = f"The survival rate for this group was **{val*100:.2f}%**."
+                else:
+                    answer = f"The average {target} is **{val:.2f}**."
             elif op == "count":
-                answer = f"Found **{len(data)}** passengers matching your criteria."
+                answer = f"Found **{len(data)}** passengers matching your query."
 
         elif intent == "visual":
             fig, ax = plt.subplots(figsize=(10, 5))
             plt.style.use('dark_background')
-            if op == "distribution":
-                sns.histplot(data=data, x=col, kde=True, ax=ax, color='#38bdf8', palette="mako")
-                answer = f"Showing the distribution of **{col}**."
-            elif op == "count" or compare:
-                sns.countplot(data=data, x=col, hue=compare, ax=ax, palette="viridis")
-                answer = f"Frequency analysis of **{col}**{' compared by ' + compare if compare else ''}."
+            if groupby:
+                sns.countplot(data=data, x=groupby, hue=target if target != groupby else None, ax=ax, palette="mako")
+                answer = f"Visualizing counts by **{groupby}**."
+            else:
+                sns.histplot(data=data, x=target, kde=True, ax=ax, color='#38bdf8')
+                answer = f"Distribution of **{target}** displayed."
             
+            # Stylize plot
             ax.set_facecolor('none')
             fig.patch.set_facecolor('none')
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
 
-        return answer if answer else "Analysis complete, but no specific insight found.", fig
+        return answer, fig
     except Exception as e:
-        return f"Computation Error: {e}", None
+        return f"Operational Error: {e}", None
 
 # ---------------- Chat System ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Display History
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-        if "fig" in msg and msg["fig"]:
-            st.pyplot(msg["fig"])
+for m in st.session_state.messages:
+    with st.chat_message(m["role"]):
+        st.markdown(m["content"])
+        if "fig" in m and m["fig"]: st.pyplot(m["fig"])
 
-# Handling Prompt Injection from Sidebar/Input
-prompt = st.chat_input("Message Titanic AI...")
-if "pushed_prompt" in st.session_state:
-    prompt = st.session_state.pushed_prompt
-    del st.session_state.pushed_prompt
+# Handling prompt
+prompt = st.chat_input("Ask a question about the Titanic...")
+if "active_prompt" in st.session_state:
+    prompt = st.session_state.active_prompt
+    del st.session_state.active_prompt
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        st.caption(f"🧠 Reasoning: Parsing intent for '{prompt}'...")
+        
         status = st.empty()
         status.markdown("""
             <div class="loading-box">
                 <div class="spike"></div><div class="spike"></div><div class="spike"></div>
                 <div class="spike"></div><div class="spike"></div>
-                <span style="font-size: 0.9rem; color: #94a3b8; font-family: 'Fira Code';">AI.THINKING()</span>
+                <small style="color: #94a3b8; font-family: 'Fira Code';">ENGAGING_CORE_ENGINE</small>
             </div>
         """, unsafe_allow_html=True)
         
-        plan = build_analysis_plan(prompt)
-        status.markdown("""
-            <div class="loading-box">
-                <div class="spike"></div><div class="spike"></div><div class="spike"></div>
-                <div class="spike"></div><div class="spike"></div>
-                <span style="font-size: 0.9rem; color: #94a3b8; font-family: 'Fira Code';">PANDAS.EXECUTE()</span>
-            </div>
-        """, unsafe_allow_html=True)
+        plan = build_computational_plan(prompt, df)
+        res, fig = execute_computational_plan(plan, df)
         
-        res, fig = execute_plan(plan, df)
         status.empty()
-        
         st.markdown(res)
         if fig: st.pyplot(fig)
+        
         st.session_state.messages.append({"role": "assistant", "content": res, "fig": fig})
