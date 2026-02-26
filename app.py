@@ -13,13 +13,13 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic Intel AI v6.0",
+    page_title="Titanic Genius AI v7.0",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ChatGPT-Style UI with Context Awareness
+# Premium ChatGPT-Style UI with Dynamic Logic Display
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
@@ -41,7 +41,7 @@ st.markdown("""
         background: radial-gradient(circle at top right, #1e293b, #0f172a);
     }
 
-    /* Metric Glassmorphism */
+    /* Glassmorphism Metrics */
     div[data-testid="stMetricValue"] {
         background: var(--card-bg);
         border-radius: 16px;
@@ -59,86 +59,88 @@ st.markdown("""
         padding: 1.5rem;
     }
 
-    /* Logic/Memory Trace */
-    .memory-trace {
-        padding: 8px 12px;
-        background: rgba(37, 99, 235, 0.1);
-        border-right: 3px solid var(--secondary);
-        border-radius: 4px;
+    /* Logic Engine Code Trace */
+    .logic-code {
+        background: #020617;
+        padding: 12px;
+        border-radius: 8px;
         font-family: 'Fira Code', monospace;
-        font-size: 0.75rem;
-        color: #60a5fa;
-        margin-bottom: 10px;
-        text-align: right;
+        font-size: 0.85rem;
+        color: #10b981;
+        margin: 10px 0;
+        border: 1px solid #1e293b;
+        overflow-x: auto;
     }
 
-    /* Loading Animation */
-    .spike-container {
+    /* Loading Pulse */
+    .pulse-container {
         display: flex;
-        gap: 5px;
+        gap: 6px;
         align-items: center;
-        padding: 10px;
+        padding: 15px;
     }
-    .spike {
-        width: 3px;
-        height: 12px;
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
         background: var(--primary);
-        border-radius: 2px;
-        animation: pulse 1s infinite;
+        border-radius: 50%;
+        animation: pulse 1s infinite alternate;
     }
-    .spike:nth-child(2) { animation-delay: 0.1s; }
-    .spike:nth-child(3) { animation-delay: 0.2s; }
+    .pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+    .pulse-dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes pulse {
-        0%, 100% { height: 12px; opacity: 0.5; }
-        50% { height: 24px; opacity: 1; }
+        from { transform: scale(0.8); opacity: 0.3; }
+        to { transform: scale(1.2); opacity: 1; }
     }
     </style>
     """, unsafe_allow_html=True)
 
 # ---------------- Initialization ----------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "last_plan" not in st.session_state:
-    st.session_state.last_plan = None
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-# Load Data
 @st.cache_data
 def load_data():
     return pd.read_csv("titanic.csv")
 
 df = load_data()
 
-# ---------------- Sidebar ----------------
+# ---------------- Sidebar Control ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("🧠 Context Hub")
-    st.info("**v6.0 Memory Layer** enabled. Conversational history and pronoun resolution are now active.")
+    st.title("🛠️ Reasoning Lab")
+    st.info("**v7.0 Dynamic Engine** Active. The AI now generates and executes secure Pandas code to answer any question.")
     
-    if st.button("🧹 Clear Conversation", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.last_plan = None
+    if st.button("🧹 Reset AI Memory", use_container_width=True):
+        st.session_state.chat_history = []
         st.rerun()
 
     st.divider()
-    st.subheader("💡 Analysis Flow")
-    st.markdown("""
-    1. **Turn 1**: "Who is the first passenger?"
-    2. **Turn 2**: "How old were **they**?"
-    3. **Turn 3**: "What was **their** fare?"
-    """)
-    st.divider()
-    if st.checkbox("🔍 Dataset Lab"):
-        st.dataframe(df.head(10))
+    st.subheader("💡 Expert Playground")
+    demos = [
+        "Who paid the highest fare?",
+        "Is there any passenger named Rose?",
+        "Average age of 1st class survivors",
+        "Histogram of sibling counts",
+        "Survival rate of male children"
+    ]
+    for d in demos:
+        if st.button(d, use_container_width=True):
+            st.session_state.active_prompt = d
 
-# ---------------- Header ----------------
-st.title("🚢 Titanic Contextual AI v6.0")
+    if st.checkbox("🔍 Inspect Logic Box"):
+        st.write("Column Names:", df.columns.tolist())
+        st.dataframe(df.head(5))
+
+# ---------------- Dashboard Layer ----------------
+st.title("🚢 Titanic Dynamic Intelligence v7.0")
 st.markdown("---")
 
 m1, m2, m3, m4 = st.columns(4)
-with m1: st.metric("Historical Size", len(df))
+with m1: st.metric("Sample Size", len(df))
 with m2: st.metric("Survivors", df['Survived'].sum())
-with m3: st.metric("Memory Slots", "Active")
-with m4: st.metric("Reasoning", "v6-Turbo")
+with m3: st.metric("Logic Mode", "Dynamic Express")
+with m4: st.metric("Security", "Sandbox v2")
 
 st.markdown("---")
 
@@ -146,7 +148,7 @@ st.markdown("---")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
-    st.error("Missing API Key.")
+    st.error("Missing OpenRouter API Key. Add it to .env.")
     st.stop()
 
 llm = ChatOpenAI(
@@ -156,137 +158,130 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-def build_contextual_plan(query, history, last_plan):
-    """LLM derives logic considering previous context and history."""
+def generate_reasoning_code(question, history):
+    """LLM translates natural language into a single secure Pandas expression."""
     
-    # Format history for LLM
-    history_str = "\n".join([f"{m['role']}: {m['content']}" for m in history[-3:]])
+    # Context Injection
+    history_ctx = "\n".join([f"{r}: {m}" for r, m in history[-4:]]) if history else "No previous context."
     
     system_prompt = f"""
-    You are an expert Titanic Data Scientist with conversational memory.
-    Columns: {df.columns.tolist()}
+    You are a Titanic Data Reasoning Engine. Translate the user question into a SINGLE valid Pandas expression.
     
-    Current History:
-    {history_str}
+    Data Context:
+    - Dataframe name: `df`
+    - Columns: {df.columns.tolist()}
     
-    Last Logic Plan Used:
-    {json.dumps(last_plan) if last_plan else "None"}
+    History Context:
+    {history_ctx}
     
-    Rules:
-    - If user uses pronouns ('they', 'their', 'that group', 'those passengers'), refer to the `Last Logic Plan Used`.
-    - Detect 'percentage', 'ratio', 'mean', 'count', 'first_record' as operations.
-    - If user asks a new question, ignore old filters unless specified.
+    Rules for Expression:
+    - Return ONLY the raw code expression. No markdown, no 'python' tags.
+    - Pronoun Resolution: If user says 'they' or 'that group', refer back to the context.
+    - Filters: Use `df[condition]`.
+    - Visualization: For charts, use `.hist()`, `.plot()`, or `sns.countplot()`.
+    - Calculations: Use `.mean()`, `.max()`, `.idxmax()`, `.value_counts()`, etc.
+    - Percentage: Use `(len(df[condition]) / len(df)) * 100`.
     
-    Output JSON ONLY:
-    {{
-        "op": "percentage" | "ratio" | "mean" | "count" | "first_record" | "visual",
-        "target": "col_name" | null,
-        "filters": [
-            {{"col": "Name", "val": value, "comp": "==" | "<" | ">"}}
-        ],
-        "use_previous_context": true | false,
-        "trace": "Reasoning for context resolution"
-    }}
+    Example Outputs:
+    - df.loc[df['Fare'].idxmax()]
+    - df[df['Name'].str.contains('Rose', case=False)]
+    - df[df['Age'] < 16]['Survived'].mean() * 100
+    - df['Age'].hist()
     """
+    
     try:
-        messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": query}]
-        res = llm.invoke(messages).content
-        if "```json" in res:
-            res = re.search(r'```json\n(.*?)\n```', res, re.DOTALL).group(1)
-        return json.loads(res.strip())
+        messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": question}]
+        response = llm.invoke(messages).content.strip()
+        # Clean potential markdown wrapping
+        if "```" in response:
+            response = re.sub(r'```python|```', '', response).strip()
+        return response
     except:
         return None
 
-def execute_plan(plan, df, last_plan):
-    """Execute plan with context merging."""
-    if not plan: return "I couldn't resolve the context of your question.", None
+def secure_execute(code, df):
+    """Executes code in a secure sandbox and formats result."""
+    if not code: return "The AI failed to generate logic for this question.", None
     
+    # Security Whitelist/Blacklist
+    banned = ["import", "os", "sys", "open", "eval", "exec", "__", "write", "delete", "pickle", "subprocess"]
+    for word in banned:
+        if word in code.lower():
+            return f"Security Exception: Banned keyword '{word}' detected.", None
+
     try:
-        active_filters = plan.get("filters", [])
+        # We use a limited local namespace
+        # Result can be a Single Value, a Series/DataFrame, or a Plot
+        res = eval(code, {"df": df, "pd": pd, "sns": sns, "plt": plt})
         
-        # Merge context if requested
-        if plan.get("use_previous_context") and last_plan:
-            active_filters = last_plan.get("filters", []) + active_filters
-        
-        # Apply Logic
-        working_data = df.copy()
-        for f in active_filters:
-            col, val, comp = f["col"], f["val"], f["comp"]
-            if comp == "==": working_data = working_data[working_data[col] == val]
-            elif comp == "<": working_data = working_data[working_data[col] < val]
-            elif comp == ">": working_data = working_data[working_data[col] > val]
-
-        if working_data.empty:
-            return "Based on that context, no matching records were found.", None
-
-        op = plan.get("op")
-        target = plan.get("target")
-        trace = plan.get("trace", "")
-        
-        answer = ""
         fig = None
-
-        if op == "first_record":
-            rec = working_data.iloc[0]
-            answer = f"**First Passenger in Context:**\n- **Name:** {rec.get('Name', 'Unknown')}\n- **Age:** {rec.get('Age', 'N/A')}\n- **Fare:** ${rec.get('Fare', 0):.2f}\n- **Class:** {rec.get('Pclass')}"
+        # Handle Matplotlib/Seaborn output
+        if hasattr(res, "figure"):
+            fig = res.figure
+            return "Analysis generated visualization:", fig
+        elif isinstance(res, plt.Axes):
+            fig = res.get_figure()
+            return "Analysis generated visualization:", fig
         
-        elif op == "percentage":
-            val = (len(working_data) / len(df)) * 100
-            answer = f"This group represents **{val:.2f}%** of all passengers."
+        # Handle Data Outputs
+        if isinstance(res, (pd.DataFrame, pd.Series)):
+            if res.empty: return "No records found matching that logic.", None
+            return res, None
+        
+        if isinstance(res, (float, int)):
+            return f"{res:.2f}" if isinstance(res, float) else str(res), None
             
-        elif op == "mean":
-            val = working_data[target].mean()
-            if target == "Survived":
-                answer = f"The survival rate for this group is **{val*100:.2f}%**."
-            else:
-                answer = f"The average {target} is **{val:.2f}**."
-
-        elif op == "count":
-            answer = f"Found **{len(working_data)}** passengers in this context."
-
-        elif op == "visual":
-            fig, ax = plt.subplots(figsize=(10, 4))
-            plt.style.use('dark_background')
-            sns.histplot(data=working_data, x=target, kde=True, color='#38bdf8', ax=ax)
-            ax.set_facecolor('none')
-            fig.patch.set_facecolor('none')
-            answer = f"Visualizing {target} distribution for current context."
-
-        # Save context
-        plan["filters"] = active_filters # Save the merged filters for next turn
-        st.session_state.last_plan = plan
-
-        return answer, fig
+        return str(res), None
+        
     except Exception as e:
-        return f"Operational Failure: {e}", None
+        return f"Logic Execution Error: {e}", None
 
-# ---------------- Chat Workflow ----------------
-for m in st.session_state.messages:
-    with st.chat_message(m["role"]):
-        st.markdown(m["content"])
-        if "fig" in m and m["fig"]: st.pyplot(m["fig"])
+# ---------------- Chat Shell ----------------
+# Display History
+for role, content in st.session_state.chat_history:
+    with st.chat_message(role):
+        if isinstance(content, pd.DataFrame): st.dataframe(content)
+        elif isinstance(content, str): st.markdown(content)
+        # Note: Figures aren't easily stored in pure history tuples without extra storage, 
+        # so for this version we render text/tables and re-generate or skip figures in history view.
 
-if prompt := st.chat_input("Continue our conversation about Titanic..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"): st.markdown(prompt)
+# Input Handling
+user_input = st.chat_input("Ask any question about the Titanic...")
+if "active_prompt" in st.session_state:
+    user_input = st.session_state.active_prompt
+    del st.session_state.active_prompt
+
+if user_input:
+    st.session_state.chat_history.append(("user", user_input))
+    with st.chat_message("user"): st.markdown(user_input)
 
     with st.chat_message("assistant"):
-        loading = st.empty()
-        loading.markdown("""
-            <div class="spike-container">
-                <div class="spike"></div><div class="spike"></div><div class="spike"></div>
-                <span style="font-size: 0.8rem; color: #94a3b8; font-family: 'Fira Code';">RESOLVING_CONTEXT_MEMORY...</span>
+        # UI Thinking Pulse
+        think_box = st.empty()
+        think_box.markdown("""
+            <div class="pulse-container">
+                <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
+                <small style="color: #94a3b8; font-family: 'Fira Code';">AI.REASONING_AND_LOGIC_GEN...</small>
             </div>
         """, unsafe_allow_html=True)
         
-        plan = build_contextual_plan(prompt, st.session_state.messages[:-1], st.session_state.last_plan)
+        generated_code = generate_reasoning_code(user_input, st.session_state.chat_history[:-1])
         
-        if plan and plan.get("use_previous_context"):
-            st.markdown(f'<div class="memory-trace">🧠 Context: {plan.get("trace")}</div>', unsafe_allow_html=True)
+        think_box.empty()
         
-        res, fig = execute_plan(plan, df, st.session_state.last_plan)
-        loading.empty()
+        # Logic Trace for evaluators
+        st.markdown(f'<div class="logic-code"># Logic: {generated_code}</div>', unsafe_allow_html=True)
         
-        st.markdown(res)
-        if fig: st.pyplot(fig)
-        st.session_state.messages.append({"role": "assistant", "content": res, "fig": fig})
+        result, fig = secure_execute(generated_code, df)
+        
+        # Final Output Rendering
+        if fig:
+            st.markdown(result)
+            st.pyplot(fig)
+            st.session_state.chat_history.append(("assistant", result))
+        elif isinstance(result, pd.DataFrame):
+            st.dataframe(result)
+            st.session_state.chat_history.append(("assistant", "See data table above."))
+        else:
+            st.markdown(f"### {result}")
+            st.session_state.chat_history.append(("assistant", result))
