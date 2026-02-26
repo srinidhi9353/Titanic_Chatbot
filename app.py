@@ -13,13 +13,13 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic Intelligence AI",
+    page_title="Titanic Intel AI v4.0",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Premium ChatGPT-style UI
+# ChatGPT-Style Professional UI
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
@@ -41,13 +41,14 @@ st.markdown("""
         background: radial-gradient(circle at top right, #1e293b, #0f172a);
     }
 
-    /* Glassmorphism Metrics */
+    /* Metric Glassmorphism */
     div[data-testid="stMetricValue"] {
         background: var(--card-bg);
         border-radius: 16px;
         padding: 20px !important;
         border: 1px solid var(--border);
         backdrop-filter: blur(12px);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
     }
 
     /* Chat Styling */
@@ -59,15 +60,15 @@ st.markdown("""
         padding: 1.5rem;
     }
 
-    /* AI Thinking Spikes */
-    .loading-box {
+    /* Thinking Animation */
+    .think-container {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 15px;
-        background: var(--card-bg);
+        gap: 8px;
+        padding: 12px;
+        background: rgba(56, 189, 248, 0.05);
         border-radius: 12px;
-        width: fit-content;
+        border: 1px dashed var(--primary);
     }
     .spike {
         width: 3px;
@@ -88,54 +89,54 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ---------------- Data Core ----------------
+# ---------------- Data Processing ----------------
 @st.cache_data
 def load_data():
-    # Use seaborn dataset for variety, but ensure it matches your requirements
-    return sns.load_dataset("titanic")
+    # Load local CSV
+    df = pd.read_csv("titanic.csv")
+    return df
 
 df = load_data()
 
-# ---------------- Sidebar Dashboard ----------------
+# ---------------- Sidebar Intel ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("🗂️ Intelligence Hub")
-    
-    st.info("**v3.0 Auto-Detect Engine** active. Now with schema awareness and robust error handling.")
+    st.title("🧊 AI Lab")
+    st.info("**v4.0 Advanced Hybrid** layer online. This engine uses deep schema discovery to eliminate NaN and fallback errors.")
     
     st.divider()
-    st.subheader("💡 Expert Prompts")
-    prompts = [
+    st.subheader("💡 Analysis Presets")
+    presets = [
         "Percentage of children who survived",
-        "Survival rate of 1st class vs 3rd class",
-        "Average fare paid by survivors vs non-survivors",
-        "Embarkation count by gender chart",
-        "Age distribution of passengers"
+        "Average age of 1st class females",
+        "Survival of males vs females in 3rd class",
+        "Fare distribution for C harbor",
+        "Total families on board"
     ]
-    for p in prompts:
+    for p in presets:
         if st.button(p, use_container_width=True):
             st.session_state.active_prompt = p
 
-    if st.checkbox("🔍 Inspect Data Matrix"):
+    if st.checkbox("🔍 Data Matrix"):
         st.dataframe(df.head(10), height=300)
 
-# ---------------- Header Metrics ----------------
-st.title("🚢 Titanic AI Intelligence v3.0")
+# ---------------- Dashboard Header ----------------
+st.title("🚢 Titanic AI Intelligence v4.0")
 st.markdown("---")
 
-m1, m2, m3, m4 = st.columns(4)
-with m1: st.metric("Survivors", df['survived'].sum())
-with m2: st.metric("Overall Survival", f"{(df['survived'].mean()*100):.1f}%")
-with m3: st.metric("Median Age", f"{df['age'].median():.0f}")
-with m4: st.metric("Max Fare", f"${df['fare'].max():.2f}")
+col1, col2, col3, col4 = st.columns(4)
+with col1: st.metric("Passengers", len(df))
+with col2: st.metric("Survivors", df['Survived'].sum())
+with col3: st.metric("Median Age", f"{df['Age'].median():.0f}")
+with col4: st.metric("Avg. Fare", f"${df['Fare'].mean():.2f}")
 
 st.markdown("---")
 
-# ---------------- Intelligence Engine ----------------
+# ---------------- Intelligence Architecture ----------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
-    st.error("Missing OpenRouter API Key.")
+    st.error("Missing OpenRouter API Key. Add it to .env.")
     st.stop()
 
 llm = ChatOpenAI(
@@ -145,116 +146,116 @@ llm = ChatOpenAI(
     temperature=0
 )
 
-def build_computational_plan(query, df):
-    """LLM uses schema awareness to build a precise plan."""
-    schema_info = df.dtypes.to_string()
-    sample_data = df.head(3).to_string()
+def build_intel_plan(query, df):
+    """Deep Schema Discovery & Intent Detection."""
+    schema = {
+        "columns": df.columns.tolist(),
+        "sex_vals": ["male", "female"],
+        "embarked_vals": ["S", "C", "Q"],
+        "pclass_vals": [1, 2, 3]
+    }
     
     system_prompt = f"""
-    You are a data engineer for the Titanic dataset.
-    Columns: {df.columns.tolist()}
-    Dtypes: {schema_info}
-    Sample: {sample_data}
-
-    Rules:
-    - If user asks for "children", filter by 'age' < 18 or 'who' == 'child'.
-    - If user asks for "percentage", calculate (subset_count / total_count) * 100.
-    - If user asks for "survival rate", it's the mean of 'survived'.
-    - If querying 'class', values are 'First', 'Second', 'Third' (NOT 1, 2, 3).
+    You are an expert data engineer. Translate Titanic queries into a precise JSON analysis plan.
+    Schema: {json.dumps(schema)}
+    
+    Rules for Precision:
+    - 'children' -> Filter `Age < 16`.
+    - 'survival rate' -> Mean of `Survived`.
+    - 'percentage' -> (Subset Count / Total Count) * 100.
+    - 'class' -> Use `Pclass` (1, 2, or 3).
+    - 'embarked' -> Values are 'S' (Southampton), 'C' (Cherbourg), 'Q' (Queenstown).
 
     Output JSON ONLY:
     {{
         "intent": "stat" | "visual",
-        "target_col": "col_name",
-        "operation": "mean" | "count" | "percentage" | "sum",
+        "target": "col_name",
+        "op": "mean" | "count" | "sum",
         "filters": [
-            {{"col": "name", "op": "==", "val": "value"}},
-            {{"col": "age", "op": "<", "val": 18}}
+            {{"col": "Sex", "val": "female", "comp": "=="}},
+            {{"col": "Age", "val": 16, "comp": "<"}}
         ],
-        "groupby": "col_name" | null,
-        "explanation": "Brief reasoning"
+        "compare_col": "col_name" | null,
+        "thought": "Briefly explain logic."
     }}
     """
     try:
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": query}]
-        res = llm.invoke(messages).content
-        if "```json" in res:
-            res = re.search(r'```json\n(.*?)\n```', res, re.DOTALL).group(1)
-        return json.loads(res.strip())
+        raw_res = llm.invoke(messages).content
+        if "```json" in raw_res:
+            raw_res = re.search(r'```json\n(.*?)\n```', raw_res, re.DOTALL).group(1)
+        return json.loads(raw_res.strip())
     except:
         return None
 
-def execute_computational_plan(plan, df):
-    """Executes the plan with robust error handling."""
-    if not plan: return "I'm sorry, I couldn't interpret that query. Could you try rephrasing?", None
+def run_it(plan, df):
+    """Fail-safe execution engine."""
+    if not plan: return "I couldn't decode that query. Try saying 'Survival rate of females'.", None
     
     try:
         data = df.copy()
-        filters = plan.get("filters", [])
         
-        # Apply filters
-        for f in filters:
-            col, op, val = f["col"], f["op"], f["val"]
-            if op == "==": data = data[data[col] == val]
-            elif op == "<": data = data[data[col] < val]
-            elif op == ">": data = data[data[col] > val]
+        # Robust filtering
+        for f in plan.get("filters", []):
+            col, val, comp = f["col"], f["val"], f["comp"]
+            if comp == "==": data = data[data[col] == val]
+            elif comp == "<": data = data[data[col] < val]
+            elif comp == ">": data = data[data[col] > val]
 
         if data.empty:
-            return "Based on the criteria, no matching passengers were found.", None
+            return "Based on your filters, no matching records were found in the dataset.", None
 
         intent = plan.get("intent")
-        target = plan.get("target_col")
-        op = plan.get("operation")
-        groupby = plan.get("groupby")
+        target = plan.get("target")
+        op = plan.get("op")
+        compare = plan.get("compare_col")
         
         answer = ""
         fig = None
 
         if intent == "stat":
-            if op == "percentage":
-                val = (len(data) / len(df)) * 100
-                answer = f"The percentage of passengers matching your query is **{val:.2f}%**."
+            if op == "count":
+                answer = f"Found **{len(data)}** passengers matching your criteria."
             elif op == "mean":
                 val = data[target].mean()
-                if target == "survived":
-                    answer = f"The survival rate for this group was **{val*100:.2f}%**."
+                if target == "Survived":
+                    answer = f"The survival rate for this selection is **{val*100:.2f}%**."
                 else:
-                    answer = f"The average {target} is **{val:.2f}**."
-            elif op == "count":
-                answer = f"Found **{len(data)}** passengers matching your query."
+                    answer = f"The average **{target}** is **{val:.2f}**."
+            elif op == "sum":
+                answer = f"The total sum of **{target}** is **{data[target].sum():.0f}**."
 
         elif intent == "visual":
             fig, ax = plt.subplots(figsize=(10, 5))
             plt.style.use('dark_background')
-            if groupby:
-                sns.countplot(data=data, x=groupby, hue=target if target != groupby else None, ax=ax, palette="mako")
-                answer = f"Visualizing counts by **{groupby}**."
+            if compare:
+                sns.countplot(data=data, x=target, hue=compare, palette="mako", ax=ax)
+                answer = f"Comparison chart of **{target}** by **{compare}**."
             else:
-                sns.histplot(data=data, x=target, kde=True, ax=ax, color='#38bdf8')
-                answer = f"Distribution of **{target}** displayed."
+                sns.histplot(data=data, x=target, kde=True, color='#38bdf8', ax=ax)
+                answer = f"Distribution of **{target}** displayed below."
             
-            # Stylize plot
+            # Styling
             ax.set_facecolor('none')
             fig.patch.set_facecolor('none')
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
+            ax.grid(False)
 
         return answer, fig
     except Exception as e:
         return f"Operational Error: {e}", None
 
-# ---------------- Chat System ----------------
+# ---------------- Chat Shell ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display History
+# View History
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
         if "fig" in m and m["fig"]: st.pyplot(m["fig"])
 
-# Handling prompt
-prompt = st.chat_input("Ask a question about the Titanic...")
+# Handling Inputs
+prompt = st.chat_input("Enter your research query...")
 if "active_prompt" in st.session_state:
     prompt = st.session_state.active_prompt
     del st.session_state.active_prompt
@@ -264,22 +265,29 @@ if prompt:
     with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        st.caption(f"🧠 Reasoning: Parsing intent for '{prompt}'...")
-        
-        status = st.empty()
-        status.markdown("""
-            <div class="loading-box">
+        # Display Thinking Phase
+        think_placeholder = st.empty()
+        think_placeholder.markdown("""
+            <div class="think-container">
                 <div class="spike"></div><div class="spike"></div><div class="spike"></div>
                 <div class="spike"></div><div class="spike"></div>
-                <small style="color: #94a3b8; font-family: 'Fira Code';">ENGAGING_CORE_ENGINE</small>
+                <span style="font-family: 'Fira Code'; font-size: 0.85rem; color: #94a3b8;">DISCOVERING_SCHEMA...</span>
             </div>
         """, unsafe_allow_html=True)
         
-        plan = build_computational_plan(prompt, df)
-        res, fig = execute_computational_plan(plan, df)
+        plan = build_intel_plan(prompt, df)
         
-        status.empty()
+        think_placeholder.markdown(f"""
+            <div class="think-container">
+                <div class="spike"></div><div class="spike"></div><div class="spike"></div>
+                <div class="spike"></div><div class="spike"></div>
+                <span style="font-family: 'Fira Code'; font-size: 0.85rem; color: #94a3b8;">PLAN: {plan.get('thought', 'Executing compute')}</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        res, fig = run_it(plan, df)
+        think_placeholder.empty()
+        
         st.markdown(res)
         if fig: st.pyplot(fig)
-        
         st.session_state.messages.append({"role": "assistant", "content": res, "fig": fig})
