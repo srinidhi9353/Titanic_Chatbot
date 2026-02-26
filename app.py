@@ -12,13 +12,13 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic Copilot v7.5",
+    page_title="Titanic Stable AI v8.0",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Professional ChatGPT-Style UI
+# Premium ChatGPT-Style UI
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
@@ -83,7 +83,7 @@ st.markdown("""
 
 # ---------------- Initialization ----------------
 if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+    st.session_state.chat_history = []  # List of (role, content)
 
 @st.cache_data
 def load_data():
@@ -94,39 +94,39 @@ df = load_data()
 # ---------------- Sidebar ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("🚢 Data Copilot v7.5")
-    st.info("**Conversational Reasoning** active. Pronoun resolution and regex-secure execution enabled.")
+    st.title("🚢 Stable AI v8.0")
+    st.info("**Production Mode**. Fixed history unpacking, plotting crashes, and result formatting.")
     
     if st.button("🧹 Clear Chat History", use_container_width=True):
         st.session_state.chat_history = []
         st.rerun()
 
     st.divider()
-    st.subheader("💡 Expert Scenarios")
+    st.subheader("💡 Analysis Presets")
     demos = [
         "Who is aged more?",
         "What is the maximum age?",
-        "Ratio of adults and children",
+        "Ratio of male and female passengers",
+        "Average age of 1st class survivors",
         "Is there a passenger named Rose?",
-        "Survival rate of that group"
+        "Survival distribution by class Chart"
     ]
     for d in demos:
         if st.button(d, use_container_width=True):
             st.session_state.active_prompt = d
 
-    if st.checkbox("🔍 Dataset Lab"):
-        st.write("Columns:", df.columns.tolist())
+    if st.checkbox("🔍 Dataset View"):
         st.dataframe(df.head(5))
 
 # ---------------- Dashboard ----------------
-st.title("🚢 Titanic AI Copilot v7.5")
+st.title("🚢 Titanic Stable Copilot v8.0")
 st.markdown("---")
 
 m1, m2, m3, m4 = st.columns(4)
 with m1: st.metric("Sample Size", len(df))
 with m2: st.metric("Survivors", df['Survived'].sum())
-with m3: st.metric("Security", "Regex Sandbox")
-with m4: st.metric("Reasoning", "Conversational")
+with m3: st.metric("Status", "Stable v8")
+with m4: st.metric("Logic", "Semantic Express")
 
 st.markdown("---")
 
@@ -145,9 +145,16 @@ llm = ChatOpenAI(
 )
 
 def generate_reasoning_code(question, history):
-    """Generates high-precision Pandas code with history awareness."""
+    """Generates precise Pandas code with history awareness."""
     
-    history_ctx = "\n".join([f"{r}: {m}" for r, m in history[-6:]]) if history else "Start of conversation."
+    # Safe history parsing to avoid ValueError Unpacking
+    try:
+        if history and isinstance(history[0], tuple):
+            history_ctx = "\n".join([f"{r}: {m}" for r, m in history[-6:]])
+        else:
+            history_ctx = "Start of conversation."
+    except:
+        history_ctx = "Start of conversation."
     
     system_prompt = f"""
     You are an expert pandas assistant for the Titanic dataset.
@@ -160,9 +167,9 @@ def generate_reasoning_code(question, history):
     Rules for Semantic Precision:
     - If asked "WHO", return a row: `df.loc[df['col'].idxmax()]` or `df[df['col'] == value]`.
     - If asked "WHAT IS THE MAX/MIN", return the value: `df['age'].max()`.
-    - Ratio: Count A / Count B. Use `df[df['who']=='adult'].shape[0] / df[df['who']=='child'].shape[0]`.
+    - Ratio: Count A / Count B. Use `df[df['Sex']=='male'].shape[0] / df[df['Sex']=='female'].shape[0]`.
     - Pronouns: Resolve 'they', 'those', 'them' using the history context.
-    - Return ONLY raw Python code. No markdown, no comments.
+    - Generated ONLY raw Python code. No markdown, no comments.
     
     Security: Never use import, os, sys, open, eval, exec.
     """
@@ -177,38 +184,46 @@ def generate_reasoning_code(question, history):
         return None
 
 def is_safe(code):
-    """Regex-based security with word boundaries to avoid false positives (e.g., 'Rose' containing 'os')."""
+    """Regex-based security with word boundaries."""
     banned_words = ["import", "open(", "exec(", "eval(", "__", "sys.", "os.", "subprocess"]
     for word in banned_words:
-        # Use word boundaries \b to ensure we match the word itself, not substrings
         pattern = rf"\b{re.escape(word)}\b"
         if re.search(pattern, code.lower()):
             return False
     return True
 
-def safe_execute(code, df):
-    """Safely execute and format the output."""
+def safe_execute(code, user_input, df):
+    """Safely execute, detect plots using gcf, and format results semantic-aware."""
     if not code: return "The AI failed to derive a logic plan.", None
-    if not is_safe(code): return f"Security Restriction: The generated logic was blocked for safety. (Reason: Banned keyword).", None
+    if not is_safe(code): return f"Security Restriction: Logic blocked for safety.", None
 
     try:
-        # Use a localized context for eval
+        # Clear previous plots to avoid mixing
+        plt.close('all')
+        
+        # Localized eval
         res = eval(code, {"df": df, "pd": pd, "sns": sns, "plt": plt})
         
-        fig = None
-        if hasattr(res, "figure"):
-            fig = res.figure
-            return "Visual analysis complete:", fig
-        elif isinstance(res, plt.Axes):
-            fig = res.get_figure()
+        # Check if a plot was generated (even if res is not a plot object)
+        if plt.get_fignums():
+            fig = plt.gcf()
             return "Visual analysis complete:", fig
         
+        # Semantic formatting for Ratios
+        if "ratio" in user_input.lower() and isinstance(res, (float, int)):
+            return f"The ratio is **{res:.2f} : 1**", None
+            
+        # Semantic formatting for Percentages
+        if "percentage" in user_input.lower() and isinstance(res, (float, int)):
+            return f"The result is **{res:.2f}%**", None
+
+        # Data Outputs
         if isinstance(res, pd.DataFrame):
             return res, None
         if isinstance(res, pd.Series):
             return res.to_frame(), None
         if isinstance(res, (float, int)):
-            return f"The result is **{res:.2f}**" if isinstance(res, float) else f"The result is **{res}**", None
+            return f"Result: **{res:.2f}**" if isinstance(res, float) else f"Result: **{res}**", None
             
         return str(res), None
     except Exception as e:
@@ -220,12 +235,13 @@ for role, content in st.session_state.chat_history:
         if isinstance(content, pd.DataFrame): st.dataframe(content)
         elif isinstance(content, str): st.markdown(content)
 
-user_input = st.chat_input("Ask a data question...")
+user_input = st.chat_input("Ask a Titanic question...")
 if "active_prompt" in st.session_state:
     user_input = st.session_state.active_prompt
     del st.session_state.active_prompt
 
 if user_input:
+    # Append as tuple to prevent unpack errors in next turn
     st.session_state.chat_history.append(("user", user_input))
     with st.chat_message("user"): st.markdown(user_input)
 
@@ -234,17 +250,15 @@ if user_input:
         pulse.markdown("""
             <div class="pulse-container">
                 <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
-                <small style="color: #94a3b8; font-family: 'Fira Code';">AI.REASONING...</small>
+                <small style="color: #94a3b8; font-family: 'Fira Code';">AI.STABLE_REASONING...</small>
             </div>
         """, unsafe_allow_html=True)
         
-        code = generate_reasoning_code(user_input, [m[1] for m in st.session_state.chat_history[:-1]])
+        # Pass history tuples correctly
+        code = generate_reasoning_code(user_input, st.session_state.chat_history[:-1])
         pulse.empty()
         
-        # Suppress logic trace but allow for internal debugging if needed (set to False by default)
-        # st.code(code, language='python') 
-        
-        result, fig = safe_execute(code, df)
+        result, fig = safe_execute(code, user_input, df)
         
         if fig:
             st.markdown(result)
