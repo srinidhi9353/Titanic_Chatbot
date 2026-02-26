@@ -3,7 +3,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
-import json
 import re
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -13,13 +12,13 @@ load_dotenv()
 
 # ---------------- Page Config & Aesthetics ----------------
 st.set_page_config(
-    page_title="Titanic Genius AI v7.0",
+    page_title="Titanic Copilot v7.5",
     page_icon="🚢",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Premium ChatGPT-Style UI with Dynamic Logic Display
+# Professional ChatGPT-Style UI
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Fira+Code:wght@400;500&display=swap');
@@ -59,19 +58,6 @@ st.markdown("""
         padding: 1.5rem;
     }
 
-    /* Logic Engine Code Trace */
-    .logic-code {
-        background: #020617;
-        padding: 12px;
-        border-radius: 8px;
-        font-family: 'Fira Code', monospace;
-        font-size: 0.85rem;
-        color: #10b981;
-        margin: 10px 0;
-        border: 1px solid #1e293b;
-        overflow-x: auto;
-    }
-
     /* Loading Pulse */
     .pulse-container {
         display: flex;
@@ -105,46 +91,46 @@ def load_data():
 
 df = load_data()
 
-# ---------------- Sidebar Control ----------------
+# ---------------- Sidebar ----------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/f/fd/RMS_Titanic_3.jpg", use_container_width=True)
-    st.title("🛠️ Reasoning Lab")
-    st.info("**v7.0 Dynamic Engine** Active. The AI now generates and executes secure Pandas code to answer any question.")
+    st.title("🚢 Data Copilot v7.5")
+    st.info("**Conversational Reasoning** active. Pronoun resolution and regex-secure execution enabled.")
     
-    if st.button("🧹 Reset AI Memory", use_container_width=True):
+    if st.button("🧹 Clear Chat History", use_container_width=True):
         st.session_state.chat_history = []
         st.rerun()
 
     st.divider()
-    st.subheader("💡 Expert Playground")
+    st.subheader("💡 Expert Scenarios")
     demos = [
-        "Who paid the highest fare?",
-        "Is there any passenger named Rose?",
-        "Average age of 1st class survivors",
-        "Histogram of sibling counts",
-        "Survival rate of male children"
+        "Who is aged more?",
+        "What is the maximum age?",
+        "Ratio of adults and children",
+        "Is there a passenger named Rose?",
+        "Survival rate of that group"
     ]
     for d in demos:
         if st.button(d, use_container_width=True):
             st.session_state.active_prompt = d
 
-    if st.checkbox("🔍 Inspect Logic Box"):
-        st.write("Column Names:", df.columns.tolist())
+    if st.checkbox("🔍 Dataset Lab"):
+        st.write("Columns:", df.columns.tolist())
         st.dataframe(df.head(5))
 
-# ---------------- Dashboard Layer ----------------
-st.title("🚢 Titanic Dynamic Intelligence v7.0")
+# ---------------- Dashboard ----------------
+st.title("🚢 Titanic AI Copilot v7.5")
 st.markdown("---")
 
 m1, m2, m3, m4 = st.columns(4)
 with m1: st.metric("Sample Size", len(df))
 with m2: st.metric("Survivors", df['Survived'].sum())
-with m3: st.metric("Logic Mode", "Dynamic Express")
-with m4: st.metric("Security", "Sandbox v2")
+with m3: st.metric("Security", "Regex Sandbox")
+with m4: st.metric("Reasoning", "Conversational")
 
 st.markdown("---")
 
-# ---------------- Intelligence Engine ----------------
+# ---------------- AI Engine ----------------
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 if not OPENROUTER_API_KEY:
@@ -159,94 +145,82 @@ llm = ChatOpenAI(
 )
 
 def generate_reasoning_code(question, history):
-    """LLM translates natural language into a single secure Pandas expression."""
+    """Generates high-precision Pandas code with history awareness."""
     
-    # Context Injection
-    history_ctx = "\n".join([f"{r}: {m}" for r, m in history[-4:]]) if history else "No previous context."
+    history_ctx = "\n".join([f"{r}: {m}" for r, m in history[-6:]]) if history else "Start of conversation."
     
     system_prompt = f"""
-    You are a Titanic Data Reasoning Engine. Translate the user question into a SINGLE valid Pandas expression.
+    You are an expert pandas assistant for the Titanic dataset.
+    Dataframe: `df`
+    Columns: ['PassengerId', 'Survived', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp', 'Parch', 'Ticket', 'Fare', 'Cabin', 'Embarked']
     
-    Data Context:
-    - Dataframe name: `df`
-    - Columns: {df.columns.tolist()}
-    
-    History Context:
+    Recent History:
     {history_ctx}
     
-    Rules for Expression:
-    - Return ONLY the raw code expression. No markdown, no 'python' tags.
-    - Pronoun Resolution: If user says 'they' or 'that group', refer back to the context.
-    - Filters: Use `df[condition]`.
-    - Visualization: For charts, use `.hist()`, `.plot()`, or `sns.countplot()`.
-    - Calculations: Use `.mean()`, `.max()`, `.idxmax()`, `.value_counts()`, etc.
-    - Percentage: Use `(len(df[condition]) / len(df)) * 100`.
+    Rules for Semantic Precision:
+    - If asked "WHO", return a row: `df.loc[df['col'].idxmax()]` or `df[df['col'] == value]`.
+    - If asked "WHAT IS THE MAX/MIN", return the value: `df['age'].max()`.
+    - Ratio: Count A / Count B. Use `df[df['who']=='adult'].shape[0] / df[df['who']=='child'].shape[0]`.
+    - Pronouns: Resolve 'they', 'those', 'them' using the history context.
+    - Return ONLY raw Python code. No markdown, no comments.
     
-    Example Outputs:
-    - df.loc[df['Fare'].idxmax()]
-    - df[df['Name'].str.contains('Rose', case=False)]
-    - df[df['Age'] < 16]['Survived'].mean() * 100
-    - df['Age'].hist()
+    Security: Never use import, os, sys, open, eval, exec.
     """
     
     try:
         messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": question}]
         response = llm.invoke(messages).content.strip()
-        # Clean potential markdown wrapping
         if "```" in response:
             response = re.sub(r'```python|```', '', response).strip()
         return response
     except:
         return None
 
-def secure_execute(code, df):
-    """Executes code in a secure sandbox and formats result."""
-    if not code: return "The AI failed to generate logic for this question.", None
-    
-    # Security Whitelist/Blacklist
-    banned = ["import", "os", "sys", "open", "eval", "exec", "__", "write", "delete", "pickle", "subprocess"]
-    for word in banned:
-        if word in code.lower():
-            return f"Security Exception: Banned keyword '{word}' detected.", None
+def is_safe(code):
+    """Regex-based security with word boundaries to avoid false positives (e.g., 'Rose' containing 'os')."""
+    banned_words = ["import", "open(", "exec(", "eval(", "__", "sys.", "os.", "subprocess"]
+    for word in banned_words:
+        # Use word boundaries \b to ensure we match the word itself, not substrings
+        pattern = rf"\b{re.escape(word)}\b"
+        if re.search(pattern, code.lower()):
+            return False
+    return True
+
+def safe_execute(code, df):
+    """Safely execute and format the output."""
+    if not code: return "The AI failed to derive a logic plan.", None
+    if not is_safe(code): return f"Security Restriction: The generated logic was blocked for safety. (Reason: Banned keyword).", None
 
     try:
-        # We use a limited local namespace
-        # Result can be a Single Value, a Series/DataFrame, or a Plot
+        # Use a localized context for eval
         res = eval(code, {"df": df, "pd": pd, "sns": sns, "plt": plt})
         
         fig = None
-        # Handle Matplotlib/Seaborn output
         if hasattr(res, "figure"):
             fig = res.figure
-            return "Analysis generated visualization:", fig
+            return "Visual analysis complete:", fig
         elif isinstance(res, plt.Axes):
             fig = res.get_figure()
-            return "Analysis generated visualization:", fig
+            return "Visual analysis complete:", fig
         
-        # Handle Data Outputs
-        if isinstance(res, (pd.DataFrame, pd.Series)):
-            if res.empty: return "No records found matching that logic.", None
+        if isinstance(res, pd.DataFrame):
             return res, None
-        
+        if isinstance(res, pd.Series):
+            return res.to_frame(), None
         if isinstance(res, (float, int)):
-            return f"{res:.2f}" if isinstance(res, float) else str(res), None
+            return f"The result is **{res:.2f}**" if isinstance(res, float) else f"The result is **{res}**", None
             
         return str(res), None
-        
     except Exception as e:
         return f"Logic Execution Error: {e}", None
 
 # ---------------- Chat Shell ----------------
-# Display History
 for role, content in st.session_state.chat_history:
     with st.chat_message(role):
         if isinstance(content, pd.DataFrame): st.dataframe(content)
         elif isinstance(content, str): st.markdown(content)
-        # Note: Figures aren't easily stored in pure history tuples without extra storage, 
-        # so for this version we render text/tables and re-generate or skip figures in history view.
 
-# Input Handling
-user_input = st.chat_input("Ask any question about the Titanic...")
+user_input = st.chat_input("Ask a data question...")
 if "active_prompt" in st.session_state:
     user_input = st.session_state.active_prompt
     del st.session_state.active_prompt
@@ -256,25 +230,22 @@ if user_input:
     with st.chat_message("user"): st.markdown(user_input)
 
     with st.chat_message("assistant"):
-        # UI Thinking Pulse
-        think_box = st.empty()
-        think_box.markdown("""
+        pulse = st.empty()
+        pulse.markdown("""
             <div class="pulse-container">
                 <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
-                <small style="color: #94a3b8; font-family: 'Fira Code';">AI.REASONING_AND_LOGIC_GEN...</small>
+                <small style="color: #94a3b8; font-family: 'Fira Code';">AI.REASONING...</small>
             </div>
         """, unsafe_allow_html=True)
         
-        generated_code = generate_reasoning_code(user_input, st.session_state.chat_history[:-1])
+        code = generate_reasoning_code(user_input, [m[1] for m in st.session_state.chat_history[:-1]])
+        pulse.empty()
         
-        think_box.empty()
+        # Suppress logic trace but allow for internal debugging if needed (set to False by default)
+        # st.code(code, language='python') 
         
-        # Logic Trace for evaluators
-        st.markdown(f'<div class="logic-code"># Logic: {generated_code}</div>', unsafe_allow_html=True)
+        result, fig = safe_execute(code, df)
         
-        result, fig = secure_execute(generated_code, df)
-        
-        # Final Output Rendering
         if fig:
             st.markdown(result)
             st.pyplot(fig)
@@ -283,5 +254,5 @@ if user_input:
             st.dataframe(result)
             st.session_state.chat_history.append(("assistant", "See data table above."))
         else:
-            st.markdown(f"### {result}")
+            st.markdown(result)
             st.session_state.chat_history.append(("assistant", result))
