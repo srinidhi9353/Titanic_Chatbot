@@ -1,12 +1,13 @@
-
 import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+import json
+import re
 from dotenv import load_dotenv
-from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
 
 # Load environment variables
 load_dotenv()
@@ -104,7 +105,7 @@ with st.sidebar:
     st.title("Project Details")
     st.info("""
     **Titanic Intelligence** is an advanced data exploration tool. 
-    It uses a LangChain-powered agent to interact with the Titanic dataset in real-time.
+    It uses a Hybrid Analysis Engine to interact with the Titanic dataset in real-time.
     """)
     st.divider()
     st.markdown("### Example Queries")
@@ -113,6 +114,7 @@ with st.sidebar:
     - "Show me a histogram of passenger ages"
     - "What was the average ticket fare?"
     - "How many passengers embarked from each port?"
+    - "Survival rate of women in 1st class"
     """)
     st.divider()
     st.markdown("### Dataset Overview")
@@ -123,7 +125,6 @@ with st.sidebar:
 # ---------------- Load Dataset ----------------
 @st.cache_data
 def load_data():
-    # Loading local CSV file
     data = pd.read_csv("titanic.csv")
     return data
 
@@ -137,15 +138,12 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric("Total Passengers", len(df))
 with col2:
-    # Use 'Survived' (capitalized) from CSV
     survival_rate = f"{(df['Survived'].mean() * 100):.1f}%"
     st.metric("Survival Rate", survival_rate)
 with col3:
-    # Use 'Age' (capitalized) from CSV
     avg_age = f"{df['Age'].mean():.1f}"
     st.metric("Avg. Passenger Age", avg_age)
 with col4:
-    # Use 'Fare' (capitalized) from CSV
     avg_fare = f"${df['Fare'].mean():.2f}"
     st.metric("Avg. Fare Paid", avg_fare)
 
@@ -158,32 +156,90 @@ if not OPENROUTER_API_KEY:
     st.error("Missing OpenRouter API Key. Please check your .env file.")
     st.stop()
 
-# Using ChatOpenAI as a compatible interface for OpenRouter
 llm = ChatOpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
-    model="openai/gpt-4o-mini", # OpenRouter model slug
+    model="openai/gpt-4o-mini",
     temperature=0
 )
 
-# Enhanced Agent Intelligence
-prefix = """
-You are an expert data science assistant specializing in the Titanic dataset.
-Your goal is to provide accurate, concise, and professional answers to passenger-related queries using the OpenRouter API.
-When answering:
-1. Provide a clear text summary of the findings.
-2. If the user asks for a chart, plot, or distribution, explain the results in text and the UI will render the visual.
-3. Be robust to different question formats.
-4. Use the specific column names: 'Survived', 'Pclass', 'Sex', 'Age', 'Fare', 'Embarked'.
-"""
+# ---------------- Hybrid Analysis Engine ----------------
 
-agent = create_pandas_dataframe_agent(
-    llm,
-    df,
-    verbose=False,
-    prefix=prefix,
-    allow_dangerous_code=True
-)
+def get_intent(query):
+    """Uses LLM to parse user intent into a structured plan."""
+    system_prompt = """
+    You are a data analyst. Parse the user's Titanic dataset query into a JSON object.
+    Columns: Survived (0 or 1), Pclass (1, 2, 3), Sex (male, female), Age, SibSp, Parch, Fare, Embarked (C, Q, S).
+    Return JSON format: {"intent": "stat" | "visual" | "list", "column": "col_name", "operation": "mean" | "count" | "percentage" | "distribution", "filters": {"col": "val"}}
+    Examples: 
+    - "male percentage" -> {"intent": "stat", "column": "Sex", "operation": "percentage", "filters": {"Sex": "male"}}
+    - "age distribution" -> {"intent": "visual", "column": "Age", "operation": "distribution", "filters": {}}
+    - "survival rate of women in class 1" -> {"intent": "stat", "column": "Survived", "operation": "mean", "filters": {"Sex": "female", "Pclass": 1}}
+    ONLY RETURN JSON.
+    """
+    try:
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=query)
+        ]
+        response = llm.invoke(messages)
+        # Extract JSON if LLM wraps it in triple backticks
+        clean_content = re.sub(r'```json\n|\n```', '', response.content).strip()
+        return json.loads(clean_content)
+    except:
+        return None
+
+def execute_analysis(plan, df):
+    """Executes the analysis plan and returns (answer, fig)."""
+    if not plan:
+        return "I'm sorry, I couldn't parse that query. Could you try rephrasing?", None
+
+    try:
+        filtered_df = df.copy()
+        for col, val in plan.get("filters", {}).items():
+            if col in filtered_df.columns:
+                filtered_df = filtered_df[filtered_df[col] == val]
+
+        intent = plan.get("intent")
+        col = plan.get("column")
+        op = plan.get("operation")
+
+        answer = ""
+        fig = None
+
+        if intent == "stat":
+            if op == "percentage":
+                val = (len(filtered_df) / len(df)) * 100
+                answer = f"The percentage of passengers matching those criteria is {val:.2f}%."
+            elif op == "mean":
+                val = filtered_df[col].mean()
+                if col == "Survived":
+                    answer = f"The survival rate for this group was {val*100:.2f}%."
+                else:
+                    answer = f"The average {col} is {val:.2f}."
+            elif op == "count":
+                val = len(filtered_df)
+                answer = f"There were {val} passengers matching your query."
+
+        elif intent == "visual":
+            if op == "distribution" or "histogram" in str(plan):
+                fig, ax = plt.subplots(figsize=(10, 5))
+                sns.histplot(data=filtered_df, x=col, kde=True, ax=ax, palette="mako")
+                ax.set_title(f"Distribution of {col}")
+                answer = f"Here is the distribution chart for {col}."
+            elif op == "count":
+                fig, ax = plt.subplots(figsize=(10, 5))
+                sns.countplot(data=filtered_df, x=col, ax=ax, palette="viridis")
+                ax.set_title(f"Count of {col}")
+                answer = f"Here is the frequency chart for {col}."
+
+        if not answer:
+            answer = "I found the data, but I'm not sure how to summarize it. Try asking for a 'percentage', 'average', or 'chart'."
+        
+        return answer, fig
+
+    except Exception as e:
+        return f"Error executing analysis: {e}", None
 
 # ---------------- Chat Interface ----------------
 if "messages" not in st.session_state:
@@ -193,6 +249,8 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        if "fig" in message and message["fig"] is not None:
+            st.pyplot(message["fig"])
 
 # User Input
 if prompt := st.chat_input("Ask a question about the Titanic passengers..."):
@@ -209,41 +267,32 @@ if prompt := st.chat_input("Ask a question about the Titanic passengers..."):
                 <div class="spike"></div>
                 <div class="spike"></div>
                 <div class="spike"></div>
-                <span style="margin-left: 10px; font-size: 0.9rem; color: #94a3b8;">Analyzing patterns...</span>
+                <span style="margin-left: 10px; font-size: 0.9rem; color: #94a3b8;">Routing intelligence...</span>
             </div>
         """, unsafe_allow_html=True)
         
-        try:
-            response = agent.run(prompt)
-            loading_placeholder.empty()
-            st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-
-            # Context-aware visualization
-            prompt_lower = prompt.lower()
-            if any(word in prompt_lower for word in ["plot", "chart", "visualize", "distribution", "histogram", "graph"]):
-                st.divider()
-                st.caption("Auto-generated visualization based on your query:")
-                
-                if "age" in prompt_lower:
-                    fig, ax = plt.subplots(figsize=(10, 4))
-                    sns.histplot(data=df, x="Age", hue="Survived", kde=True, palette="mako", ax=ax)
-                    st.pyplot(fig)
-                
-                elif "class" in prompt_lower or "pclass" in prompt_lower:
-                    fig, ax = plt.subplots(figsize=(10, 4))
-                    sns.countplot(data=df, x="Pclass", hue="Survived", palette="viridis", ax=ax)
-                    st.pyplot(fig)
-                
-                elif "gender" in prompt_lower or "sex" in prompt_lower or "male" in prompt_lower or "female" in prompt_lower:
-                    fig, ax = plt.subplots(figsize=(10, 4))
-                    sns.barplot(data=df, x="Sex", y="Survived", palette="magma", ax=ax)
-                    st.pyplot(fig)
-                
-                elif "port" in prompt_lower or "embark" in prompt_lower:
-                    fig, ax = plt.subplots(figsize=(10, 4))
-                    sns.countplot(data=df, x="Embarked", palette="cubehelix", ax=ax)
-                    st.pyplot(fig)
-
-        except Exception as e:
-            st.error(f"Error analyzing data: {e}")
+        # 1. Get Intent
+        plan = get_intent(prompt)
+        loading_placeholder.markdown("""
+            <div class="spikes-container">
+                <div class="spike"></div>
+                <div class="spike"></div>
+                <div class="spike"></div>
+                <div class="spike"></div>
+                <div class="spike"></div>
+                <span style="margin-left: 10px; font-size: 0.9rem; color: #94a3b8;">Processing data...</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # 2. Execute
+        answer, fig = execute_analysis(plan, df)
+        
+        loading_placeholder.empty()
+        st.markdown(answer)
+        if fig:
+            st.pyplot(fig)
+        
+        # Save to history
+        new_msg = {"role": "assistant", "content": answer}
+        if fig: new_msg["fig"] = fig
+        st.session_state.messages.append(new_msg)

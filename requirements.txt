@@ -3,9 +3,6 @@ pandas
 seaborn
 matplotlib
 langchain
-# Dependencies for OpenRouter integration
 langchain-openai
-langchain-experimental
 openai
 python-dotenv
-tabulate
